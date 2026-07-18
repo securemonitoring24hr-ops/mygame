@@ -1,35 +1,49 @@
-// Detects whether the player is defending: guarding (both wrists raised to
-// face height, like a boxing guard) or dodging (torso leaned well off its
-// usual center line).
+// Detects whether the player is defending: guarding (both wrists raised
+// above shoulder height, boxing-guard style — judged along the body's own
+// "up" axis so it doesn't break if the player or phone is tilted) or dodging
+// (shoulders shifted sideways from their resting position, in camera space).
 
-const MIN_KEYPOINT_SCORE = 0.25;
-const BASELINE_ALPHA = 0.02; // slow EMA — the "usual" standing position
-const DODGE_OFFSET_FACTOR = 0.55; // shoulder-widths of lean that counts as a dodge
+import { computeBodyFrame, sub, dot } from './bodyFrame.js';
+
+const MIN_VISIBILITY = 0.35;
+const BASELINE_ALPHA = 0.02; // slow EMA — the "usual" standing position, in screen space
+const DODGE_OFFSET_FACTOR = 0.5; // shoulder-widths of lean that counts as a dodge
 
 export class DefenseDetector {
   constructor() {
-    this.baselineX = null;
+    this.baselineScreenX = null;
     this.guarding = false;
     this.dodging = false;
   }
 
-  update(k) {
-    const ls = k.left_shoulder;
-    const rs = k.right_shoulder;
-    const lw = k.left_wrist;
-    const rw = k.right_wrist;
+  // worldKeypoints for guard (body-relative), screenKeypoints for dodge (camera-relative).
+  update(worldKeypoints, screenKeypoints) {
+    this._updateGuard(worldKeypoints);
+    this._updateDodge(screenKeypoints);
+  }
 
+  _updateGuard(world) {
+    const frame = computeBodyFrame(world);
+    const lw = world.left_wrist;
+    const rw = world.right_wrist;
+
+    if (!frame || !lw || !rw || lw.score < MIN_VISIBILITY || rw.score < MIN_VISIBILITY) {
+      this.guarding = false;
+      return;
+    }
+
+    const lUp = dot(sub(lw, frame.shoulderMid), frame.up);
+    const rUp = dot(sub(rw, frame.shoulderMid), frame.up);
+
+    // Both wrists at or above shoulder height along the body's own up axis.
+    this.guarding = lUp > -0.05 * frame.scale && rUp > -0.05 * frame.scale;
+  }
+
+  _updateDodge(screen) {
+    const ls = screen.left_shoulder;
+    const rs = screen.right_shoulder;
     const shouldersOk =
-      ls && rs && ls.score >= MIN_KEYPOINT_SCORE && rs.score >= MIN_KEYPOINT_SCORE;
-
-    // Guard: both wrists visible and above shoulder height (screen y grows down).
-    this.guarding =
-      shouldersOk &&
-      lw && rw &&
-      lw.score >= MIN_KEYPOINT_SCORE &&
-      rw.score >= MIN_KEYPOINT_SCORE &&
-      lw.y < ls.y &&
-      rw.y < rs.y;
+      ls && rs && ls.score >= MIN_VISIBILITY && rs.score >= MIN_VISIBILITY;
 
     if (!shouldersOk) {
       this.dodging = false;
@@ -39,17 +53,18 @@ export class DefenseDetector {
     const midX = (ls.x + rs.x) / 2;
     const shoulderWidth = Math.max(10, Math.hypot(ls.x - rs.x, ls.y - rs.y));
 
-    if (this.baselineX === null) {
-      this.baselineX = midX;
+    if (this.baselineScreenX === null) {
+      this.baselineScreenX = midX;
     } else {
-      this.baselineX += BASELINE_ALPHA * (midX - this.baselineX);
+      this.baselineScreenX += BASELINE_ALPHA * (midX - this.baselineScreenX);
     }
 
-    this.dodging = Math.abs(midX - this.baselineX) > DODGE_OFFSET_FACTOR * shoulderWidth;
+    this.dodging =
+      Math.abs(midX - this.baselineScreenX) > DODGE_OFFSET_FACTOR * shoulderWidth;
   }
 
   reset() {
-    this.baselineX = null;
+    this.baselineScreenX = null;
     this.guarding = false;
     this.dodging = false;
   }

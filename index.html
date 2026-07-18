@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Motion Boxing</title>
+<title>Motion Boxing: Zombie Brawl</title>
 <link rel="stylesheet" href="styles/main.css" />
 </head>
 <body>
@@ -16,14 +16,14 @@
 
       <div id="enemy" class="enemy">
         <div class="enemy-warning">!</div>
-        <canvas id="villain-canvas"></canvas>
+        <canvas id="zombie-canvas"></canvas>
       </div>
 
       <div id="damage-flash"></div>
 
       <div id="hud">
         <div class="health-bar-frame">
-          <div class="health-bar-label enemy-label">VILLAIN</div>
+          <div class="health-bar-label enemy-label">ZOMBIE</div>
           <div class="health-bar-track">
             <div id="health-bar-fill" class="health-bar-fill enemy-fill"></div>
           </div>
@@ -43,11 +43,12 @@
     </div>
 
     <div id="start-screen" class="overlay-screen">
-      <h1>Motion Boxing</h1>
+      <h1>Zombie Brawl</h1>
       <p>Allow camera access and step back so your upper body is visible.<br />
-         Throw fast punches to hit the villain &mdash; but he punches back!<br />
-         When he winds up (<strong>!</strong>), raise both fists to <strong>block</strong>
-         or lean sideways to <strong>dodge</strong>.</p>
+         Throw real punches &mdash; <strong>jabs</strong>, <strong>hooks</strong>, and
+         <strong>uppercuts</strong> are all recognized and land different damage.<br />
+         When the zombie winds up (<strong>!</strong>), raise both fists to <strong>block</strong>
+         or lean sideways to <strong>dodge</strong> its swipe.</p>
       <button id="start-btn">Enable Camera &amp; Start</button>
       <p id="start-error" class="error-text"></p>
     </div>
@@ -57,22 +58,18 @@
     </div>
 
     <div id="win-screen" class="overlay-screen hidden">
-      <h1>You Win!</h1>
+      <h1>Zombie Down!</h1>
       <p id="win-stats"></p>
       <button id="restart-btn">Play Again</button>
     </div>
 
     <div id="lose-screen" class="overlay-screen hidden">
-      <h1>Knocked Out!</h1>
+      <h1>Bitten!</h1>
       <p id="lose-stats"></p>
       <button id="retry-btn">Try Again</button>
     </div>
 
   </div>
-
-  <!-- TensorFlow.js + pose-detection (MoveNet), loaded as globals: tf, poseDetection -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
 
   <script type="module" src="src/main.js"></script>
 </body>

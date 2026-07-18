@@ -15,7 +15,7 @@ const dom = {
   videoEl: document.getElementById('webcam'),
   canvasEl: document.getElementById('overlay'),
   enemyEl: document.getElementById('enemy'),
-  spriteCanvasEl: document.getElementById('villain-canvas'),
+  spriteCanvasEl: document.getElementById('zombie-canvas'),
   healthFillEl: document.getElementById('health-bar-fill'),
   playerHealthFillEl: document.getElementById('player-health-fill'),
   arenaEl: document.getElementById('arena'),

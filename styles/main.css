@@ -17,7 +17,7 @@ html, body {
   height: 100vh;
 }
 
-/* ---------- Arena (webcam + overlay + villain) ---------- */
+/* ---------- Arena (webcam + overlay + zombie) ---------- */
 
 #arena {
   position: relative;
@@ -51,23 +51,15 @@ html, body {
   transition: transform 80ms ease-out;
 }
 
-#villain-canvas {
+#zombie-canvas {
   display: block;
-  width: min(52vw, 300px);
-  height: auto;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  width: min(50vw, 280px);
+  aspect-ratio: 3 / 4;
   filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.6));
   transition: filter 120ms ease-out;
-  animation: villain-bob 1.6s ease-in-out infinite;
 }
 
-@keyframes villain-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
-}
-
-/* "!" warning shown while the villain winds up an attack */
+/* "!" warning shown while the zombie winds up an attack */
 .enemy-warning {
   position: absolute;
   top: -0.4em;
@@ -89,26 +81,22 @@ html, body {
   to   { transform: translateX(-50%) scale(1.25); opacity: 1; }
 }
 
-.enemy.telegraph #villain-canvas {
+.enemy.telegraph #zombie-canvas {
   filter: drop-shadow(0 0 30px rgba(255, 60, 30, 0.9));
-  animation: none;
 }
 
-/* strike lunge: villain surges toward the screen */
+/* strike lunge: zombie surges toward the screen (the 3D rig also lunges its
+   own root position — this CSS punch adds a snappy screen-space kick on top) */
 .enemy.lunge {
-  transform: translate(-50%, -50%) scale(1.45);
+  transform: translate(-50%, -50%) scale(1.3);
   transition: transform 120ms cubic-bezier(0.2, 1.4, 0.4, 1);
-}
-
-.enemy.lunge #villain-canvas {
-  animation: none;
 }
 
 .enemy.hit {
   animation: enemy-shake 220ms ease-in-out;
 }
 
-.enemy.hit #villain-canvas {
+.enemy.hit #zombie-canvas {
   filter: drop-shadow(0 10px 25px rgba(255, 40, 40, 0.85)) brightness(1.6);
 }
 
@@ -120,11 +108,8 @@ html, body {
   100% { transform: translate(-50%, -50%) rotate(0deg); }
 }
 
-.enemy.dead #villain-canvas {
-  transform: rotate(90deg) translateY(20px);
-  filter: grayscale(1) brightness(0.6);
-  animation: none;
-}
+/* Death itself (collapse + fade) is animated inside the 3D rig
+   (zombie.js:_animateDeath/_fadeOut) — no CSS transform needed here. */
 
 /* red vignette flash when the player takes a hit */
 #damage-flash {
@@ -164,6 +149,7 @@ html, body {
 .popup-enemy-hit  { color: #ffd400; }
 .popup-defended   { color: #38e07b; top: 55%; }
 .popup-player-hit { color: #ff3b3b; top: 55%; }
+.popup-punch-type { color: #00e5ff; top: 28%; font-size: 1.7rem; }
 
 @keyframes hit-popup {
   0%   { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }

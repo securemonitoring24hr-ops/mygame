@@ -1,45 +1,53 @@
 import { PoseTracker } from './pose.js';
-import { PunchDetector } from './punchDetector.js';
+import { PunchClassifier } from './punchClassifier.js';
 import { DefenseDetector } from './defense.js';
-import { Villain } from './villain.js';
+import { Zombie } from './zombie.js';
 
-// Orchestrates pose tracking -> punch/defense detection -> villain AI ->
-// two-way damage -> win/lose state.
+// Orchestrates pose tracking -> punch classification / defense detection ->
+// zombie AI -> two-way damage -> win/lose state.
 
 const PLAYER_MAX_HEALTH = 100;
 const VILLAIN_HIT_DAMAGE = 15; // ~7 unblocked hits and you're out
+
+const PUNCH_LABELS = { straight: 'JAB!', hook: 'HOOK!', uppercut: 'UPPERCUT!' };
+// Uppercuts and hooks are harder to land clean than a straight punch, so
+// they're rewarded with more damage.
+const PUNCH_DAMAGE_MULTIPLIER = { straight: 0.85, hook: 1.1, uppercut: 1.35 };
 
 export class Game {
   constructor(dom) {
     this.dom = dom;
 
     this.poseTracker = new PoseTracker(dom.videoEl, dom.canvasEl);
-    this.punchDetector = new PunchDetector();
+    this.punchClassifier = new PunchClassifier();
     this.defenseDetector = new DefenseDetector();
-    this.villain = new Villain({
-      elements: {
-        enemyEl: dom.enemyEl,
-        spriteCanvasEl: dom.spriteCanvasEl,
-        healthFillEl: dom.healthFillEl,
-        arenaEl: dom.arenaEl,
-      },
-      onStrike: () => this._onVillainStrike(),
+    this.zombie = new Zombie({
+      canvasEl: dom.spriteCanvasEl,
+      containerEl: dom.enemyEl,
+      healthFillEl: dom.healthFillEl,
+      arenaEl: dom.arenaEl,
+      onStrike: () => this._onZombieStrike(),
     });
 
     this.playerHealth = PLAYER_MAX_HEALTH;
     this.hitCount = 0;
     this.state = 'idle'; // idle -> loading -> playing -> win | lose
+
+    window.addEventListener('resize', () => this.zombie.resize());
   }
 
   async start() {
     this.state = 'loading';
     await this.poseTracker.init();
+    this.zombie.resize();
 
     this._resetRound();
 
-    this.poseTracker.start((keypointsByName, timestampMs) => {
-      this._onFrame(keypointsByName, timestampMs);
+    this.poseTracker.start((screenKeypoints, worldKeypoints, timestampMs) => {
+      this._onFrame(screenKeypoints, worldKeypoints, timestampMs);
     });
+
+    this._renderLoop();
   }
 
   restart() {
@@ -48,14 +56,15 @@ export class Game {
 
   stop() {
     this.poseTracker.stop();
-    this.villain.deactivate();
+    this.zombie.deactivate();
+    this._rendering = false;
   }
 
   _resetRound() {
     const now = performance.now();
-    this.villain.reset(now);
-    this.villain.activate(now);
-    this.punchDetector.reset();
+    this.zombie.reset(now);
+    this.zombie.activate(now);
+    this.punchClassifier.reset();
     this.defenseDetector.reset();
     this.playerHealth = PLAYER_MAX_HEALTH;
     this.hitCount = 0;
@@ -64,40 +73,56 @@ export class Game {
     this.state = 'playing';
   }
 
-  _onFrame(keypointsByName, timestampMs) {
+  // The zombie's rig needs to keep animating (shamble motion) even on
+  // frames where no pose is detected, so it's driven by its own rAF loop
+  // rather than only ticking inside _onFrame.
+  _renderLoop() {
+    this._rendering = true;
+    const loop = (now) => {
+      if (!this._rendering) return;
+      if (this.state === 'playing' || this.state === 'win' || this.state === 'lose') {
+        this.zombie.update(now);
+      }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+
+  _onFrame(screenKeypoints, worldKeypoints, timestampMs) {
     if (this.state !== 'playing') return;
 
-    this.defenseDetector.update(keypointsByName);
+    this.defenseDetector.update(worldKeypoints, screenKeypoints);
     this.dom.guardIndicatorEl.classList.toggle(
       'visible',
       this.defenseDetector.guarding || this.defenseDetector.dodging
     );
 
-    const punches = this.punchDetector.update(keypointsByName, timestampMs);
+    const punches = this.punchClassifier.update(worldKeypoints, timestampMs);
     for (const punch of punches) {
       this._registerHit(punch, timestampMs);
     }
-
-    this.villain.update(timestampMs);
   }
 
   _registerHit(punch, timestampMs) {
-    if (this.villain.isDead()) return;
+    if (this.zombie.isDead()) return;
 
     this.hitCount += 1;
     this.dom.hitCounterEl.textContent = `Hits: ${this.hitCount}`;
-    this.villain.takeDamage(timestampMs);
 
-    if (this.villain.isDead()) {
+    const damage = this.zombie.damagePerHit * (PUNCH_DAMAGE_MULTIPLIER[punch.type] ?? 1);
+    this.zombie.takeDamage(timestampMs, damage);
+    this.zombie.announcePunch(PUNCH_LABELS[punch.type] ?? 'HIT!');
+
+    if (this.zombie.isDead()) {
       this.state = 'win';
-      this.villain.deactivate();
+      this.zombie.deactivate();
       this.dom.onWin({ hitCount: this.hitCount });
     }
   }
 
-  // Called by the villain at the moment its punch lands.
-  // Returns 'blocked' | 'dodged' | 'hit' so the villain can show feedback.
-  _onVillainStrike() {
+  // Called by the zombie at the moment its punch lands.
+  // Returns 'blocked' | 'dodged' | 'hit' so the zombie can show feedback.
+  _onZombieStrike() {
     if (this.state !== 'playing') return 'dodged';
 
     if (this.defenseDetector.guarding) return 'blocked';
@@ -109,7 +134,7 @@ export class Game {
 
     if (this.playerHealth <= 0) {
       this.state = 'lose';
-      this.villain.deactivate();
+      this.zombie.deactivate();
       this.dom.onLose({ hitCount: this.hitCount });
     }
     return 'hit';
