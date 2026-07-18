@@ -1,0 +1,210 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #0b0b12;
+  color: #f0f0f5;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* ---------- Arena (webcam + overlay + enemy) ---------- */
+
+#arena {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+#webcam,
+#overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* mirror so the player sees themselves like a mirror, not a camera feed */
+  transform: scaleX(-1);
+}
+
+#overlay {
+  pointer-events: none;
+}
+
+.enemy {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: transform 80ms ease-out;
+}
+
+.enemy-sprite {
+  font-size: min(28vw, 260px);
+  line-height: 1;
+  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.6));
+  transition: filter 120ms ease-out, transform 120ms ease-out;
+}
+
+.enemy.hit {
+  animation: enemy-shake 220ms ease-in-out;
+}
+
+.enemy.hit .enemy-sprite {
+  filter: drop-shadow(0 10px 25px rgba(255, 40, 40, 0.85)) brightness(1.6);
+}
+
+@keyframes enemy-shake {
+  0%   { transform: translate(-50%, -50%) rotate(0deg); }
+  25%  { transform: translate(calc(-50% + 12px), -50%) rotate(-6deg); }
+  50%  { transform: translate(calc(-50% - 10px), -50%) rotate(5deg); }
+  75%  { transform: translate(calc(-50% + 6px), -50%) rotate(-3deg); }
+  100% { transform: translate(-50%, -50%) rotate(0deg); }
+}
+
+.enemy.dead .enemy-sprite {
+  transform: rotate(90deg) translateY(20px);
+  filter: grayscale(1) brightness(0.6);
+}
+
+/* floating "HIT" popup text */
+.hit-popup {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  font-weight: 900;
+  color: #ffd400;
+  text-shadow: 0 0 10px rgba(0,0,0,0.8);
+  pointer-events: none;
+  animation: hit-popup 500ms ease-out forwards;
+}
+
+@keyframes hit-popup {
+  0%   { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
+  20%  { opacity: 1; transform: translate(-50%, -55%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -90%) scale(1); }
+}
+
+/* ---------- HUD ---------- */
+
+#hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.health-bar-frame {
+  width: min(500px, 80vw);
+}
+
+.health-bar-label {
+  font-size: 0.8rem;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: #ff5c5c;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.health-bar-track {
+  width: 100%;
+  height: 22px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.health-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #ff2d55, #ff8a2d);
+  transition: width 150ms ease-out;
+}
+
+.hit-counter {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ccc;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 3px 12px;
+  border-radius: 10px;
+}
+
+/* ---------- Overlay screens ---------- */
+
+.overlay-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(5, 5, 10, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  z-index: 10;
+}
+
+.overlay-screen.hidden {
+  display: none;
+}
+
+.overlay-screen h1 {
+  font-size: 3rem;
+  margin: 0 0 10px;
+}
+
+.overlay-screen p {
+  color: #c8c8d4;
+  max-width: 500px;
+  line-height: 1.5;
+}
+
+.overlay-screen button {
+  margin-top: 20px;
+  padding: 14px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0b0b12;
+  background: #ffd400;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: transform 100ms ease-out;
+}
+
+.overlay-screen button:hover {
+  transform: scale(1.05);
+}
+
+.error-text {
+  color: #ff5c5c;
+  font-weight: 600;
+  min-height: 1.2em;
+}

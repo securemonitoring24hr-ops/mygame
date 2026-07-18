@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Motion Boxing</title>
+<link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+
+  <div id="app">
+
+    <div id="arena">
+      <video id="webcam" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+
+      <div id="enemy" class="enemy">
+        <div id="enemy-sprite" class="enemy-sprite">🥷</div>
+      </div>
+
+      <div id="hud">
+        <div class="health-bar-frame">
+          <div class="health-bar-label">ENEMY</div>
+          <div class="health-bar-track">
+            <div id="health-bar-fill" class="health-bar-fill"></div>
+          </div>
+        </div>
+        <div id="hit-counter" class="hit-counter">Hits: 0</div>
+      </div>
+    </div>
+
+    <div id="start-screen" class="overlay-screen">
+      <h1>Motion Boxing</h1>
+      <p>Allow camera access, step back so your upper body is visible,<br />
+         and throw fast punches at the screen to hit the enemy.</p>
+      <button id="start-btn">Enable Camera &amp; Start</button>
+      <p id="start-error" class="error-text"></p>
+    </div>
+
+    <div id="loading-screen" class="overlay-screen hidden">
+      <p>Loading pose model&hellip;</p>
+    </div>
+
+    <div id="win-screen" class="overlay-screen hidden">
+      <h1>You Win!</h1>
+      <p id="win-stats"></p>
+      <button id="restart-btn">Play Again</button>
+    </div>
+
+  </div>
+
+  <!-- TensorFlow.js + pose-detection (MoveNet), loaded as globals: tf, poseDetection -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
