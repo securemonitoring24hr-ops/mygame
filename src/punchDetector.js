@@ -1,13 +1,15 @@
-// Simple, forgiving punch detection: a punch is just a fast wrist movement.
-// No jab/hook/uppercut classification - speed alone triggers a hit.
+// Simple, forgiving punch detection: a punch is a fast wrist movement that
+// also travels a real distance. Requiring both speed AND displacement filters
+// out the frame-to-frame jitter that noisy mobile cameras produce.
 //
 // Speed is normalized by shoulder width (a rough proxy for torso scale) so
 // detection works whether the player is standing close or far from the camera.
 
-const HISTORY_WINDOW_MS = 150;
-const SPEED_THRESHOLD = 3.2; // shoulder-widths per second
+const HISTORY_WINDOW_MS = 160;
+const SPEED_THRESHOLD = 3.0; // shoulder-widths per second
+const MIN_DISPLACEMENT = 0.35; // shoulder-widths — jitter never travels this far
 const COOLDOWN_MS = 350; // per-wrist, prevents one swing counting as many hits
-const MIN_KEYPOINT_SCORE = 0.3;
+const MIN_KEYPOINT_SCORE = 0.25;
 const FALLBACK_SHOULDER_WIDTH_PX = 150; // used if shoulders aren't visible
 
 const WRISTS = ['left_wrist', 'right_wrist'];
@@ -25,7 +27,12 @@ export class PunchDetector {
 
     for (const wristName of WRISTS) {
       const kp = keypointsByName[wristName];
-      if (!kp || kp.score < MIN_KEYPOINT_SCORE) continue;
+      if (!kp || kp.score < MIN_KEYPOINT_SCORE) {
+        // Lost tracking on this wrist — stale history would produce a phantom
+        // "teleport punch" when it reappears.
+        this.history[wristName].length = 0;
+        continue;
+      }
 
       const hist = this.history[wristName];
       hist.push({ x: kp.x, y: kp.y, t: timestampMs });
@@ -33,7 +40,7 @@ export class PunchDetector {
         hist.shift();
       }
 
-      if (hist.length < 2) continue;
+      if (hist.length < 3) continue;
       if (timestampMs - this.lastPunchAt[wristName] < COOLDOWN_MS) continue;
 
       const oldest = hist[0];
@@ -43,10 +50,10 @@ export class PunchDetector {
 
       const dx = newest.x - oldest.x;
       const dy = newest.y - oldest.y;
-      const distance = Math.hypot(dx, dy);
-      const speed = distance / scale / dt; // shoulder-widths per second
+      const distance = Math.hypot(dx, dy) / scale; // in shoulder-widths
+      const speed = distance / dt; // shoulder-widths per second
 
-      if (speed > SPEED_THRESHOLD) {
+      if (speed > SPEED_THRESHOLD && distance > MIN_DISPLACEMENT) {
         this.lastPunchAt[wristName] = timestampMs;
         hist.length = 0; // reset so the same swing can't retrigger
 

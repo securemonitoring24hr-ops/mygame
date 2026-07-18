@@ -15,24 +15,39 @@
       <canvas id="overlay"></canvas>
 
       <div id="enemy" class="enemy">
-        <div id="enemy-sprite" class="enemy-sprite">🥷</div>
+        <div class="enemy-warning">!</div>
+        <canvas id="villain-canvas"></canvas>
       </div>
+
+      <div id="damage-flash"></div>
 
       <div id="hud">
         <div class="health-bar-frame">
-          <div class="health-bar-label">ENEMY</div>
+          <div class="health-bar-label enemy-label">VILLAIN</div>
           <div class="health-bar-track">
-            <div id="health-bar-fill" class="health-bar-fill"></div>
+            <div id="health-bar-fill" class="health-bar-fill enemy-fill"></div>
           </div>
         </div>
         <div id="hit-counter" class="hit-counter">Hits: 0</div>
+      </div>
+
+      <div id="player-hud">
+        <div id="guard-indicator" class="guard-indicator">&#128737; DEFENDING</div>
+        <div class="health-bar-frame">
+          <div class="health-bar-label player-label">YOU</div>
+          <div class="health-bar-track">
+            <div id="player-health-fill" class="health-bar-fill player-fill"></div>
+          </div>
+        </div>
       </div>
     </div>
 
     <div id="start-screen" class="overlay-screen">
       <h1>Motion Boxing</h1>
-      <p>Allow camera access, step back so your upper body is visible,<br />
-         and throw fast punches at the screen to hit the enemy.</p>
+      <p>Allow camera access and step back so your upper body is visible.<br />
+         Throw fast punches to hit the villain &mdash; but he punches back!<br />
+         When he winds up (<strong>!</strong>), raise both fists to <strong>block</strong>
+         or lean sideways to <strong>dodge</strong>.</p>
       <button id="start-btn">Enable Camera &amp; Start</button>
       <p id="start-error" class="error-text"></p>
     </div>
@@ -45,6 +60,12 @@
       <h1>You Win!</h1>
       <p id="win-stats"></p>
       <button id="restart-btn">Play Again</button>
+    </div>
+
+    <div id="lose-screen" class="overlay-screen hidden">
+      <h1>Knocked Out!</h1>
+      <p id="lose-stats"></p>
+      <button id="retry-btn">Try Again</button>
     </div>
 
   </div>

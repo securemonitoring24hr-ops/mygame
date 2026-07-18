@@ -18,20 +18,26 @@ as a secure context even without HTTPS.)
 
 ## How it works
 
-- **`src/pose.js`** — requests the webcam, loads the MoveNet (SINGLEPOSE_LIGHTNING)
-  model, and runs a `requestAnimationFrame` loop that estimates the player's pose
-  each frame and draws the skeleton overlay.
+- **`src/pose.js`** — requests the webcam (640x480, cheap on phones), loads the
+  MoveNet (SINGLEPOSE_LIGHTNING) model with temporal smoothing enabled, applies a
+  light EMA filter over keypoints (tames mobile-camera jitter), and runs a
+  `requestAnimationFrame` loop that estimates the pose each frame and draws the
+  skeleton overlay.
 - **`src/punchDetector.js`** — tracks wrist position history over a short time
-  window and fires a "punch" event when wrist speed (normalized by shoulder width,
-  so it works at any distance from the camera) exceeds a threshold. No jab/hook/
-  uppercut classification yet — any fast wrist movement counts as a hit, with a
-  per-wrist cooldown so one swing doesn't register multiple times.
-- **`src/enemy.js`** — health, damage-per-hit, and the DOM/CSS hit feedback
-  (shake, flash, "HIT!" popup, death state).
-- **`src/game.js`** — wires pose → punch detection → enemy damage → win state
-  together. This is the seam for future features.
-- **`src/main.js`** — DOM bootstrapping, start/loading/win screen wiring, camera
-  permission error handling.
+  window and fires a "punch" event when wrist speed AND total displacement
+  (both normalized by shoulder width, so it works at any distance from the
+  camera) exceed thresholds. Requiring displacement filters out camera-noise
+  false positives. Per-wrist cooldown so one swing doesn't register twice.
+- **`src/defense.js`** — detects blocking (both wrists raised above shoulders,
+  boxing-guard style) and dodging (torso leaned off its usual center line).
+- **`src/villain.js`** — pixel-art villain rendered to a canvas from hand-encoded
+  sprite grids (idle / windup / punch / hurt frames), health, hit feedback, and
+  an attack AI: every few seconds it telegraphs with a "!" warning and glowing
+  windup, then strikes — block or dodge or lose health.
+- **`src/game.js`** — wires pose → punch/defense detection → villain AI →
+  two-way damage → win/lose state together.
+- **`src/main.js`** — DOM bootstrapping, start/loading/win/lose screen wiring,
+  camera permission error handling.
 
 ## Tuning punch detection
 
@@ -43,8 +49,8 @@ In `src/punchDetector.js`:
 - `HISTORY_WINDOW_MS` — how far back speed is measured over; shorter reacts
   faster but is noisier.
 
-## Not built yet (by design — this is the MVP)
+## Not built yet (by design)
 
 Multiple enemies, levels, punch classification (jab/hook/uppercut), an RPG
 leveling system tied to real exercise reps, and online multiplayer are all
-planned but intentionally out of scope for this first version.
+planned but intentionally out of scope for now.

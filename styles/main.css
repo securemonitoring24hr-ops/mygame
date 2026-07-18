@@ -17,7 +17,7 @@ html, body {
   height: 100vh;
 }
 
-/* ---------- Arena (webcam + overlay + enemy) ---------- */
+/* ---------- Arena (webcam + overlay + villain) ---------- */
 
 #arena {
   position: relative;
@@ -51,18 +51,64 @@ html, body {
   transition: transform 80ms ease-out;
 }
 
-.enemy-sprite {
-  font-size: min(28vw, 260px);
-  line-height: 1;
+#villain-canvas {
+  display: block;
+  width: min(52vw, 300px);
+  height: auto;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.6));
-  transition: filter 120ms ease-out, transform 120ms ease-out;
+  transition: filter 120ms ease-out;
+  animation: villain-bob 1.6s ease-in-out infinite;
+}
+
+@keyframes villain-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+
+/* "!" warning shown while the villain winds up an attack */
+.enemy-warning {
+  position: absolute;
+  top: -0.4em;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  font-size: 4rem;
+  font-weight: 900;
+  color: #ff2d2d;
+  text-shadow: 0 0 12px rgba(255, 45, 45, 0.9), 0 2px 4px rgba(0,0,0,0.8);
+  z-index: 3;
+}
+
+.enemy.telegraph .enemy-warning {
+  animation: warning-pulse 400ms ease-in-out infinite alternate;
+}
+
+@keyframes warning-pulse {
+  from { transform: translateX(-50%) scale(0.9); opacity: 0.7; }
+  to   { transform: translateX(-50%) scale(1.25); opacity: 1; }
+}
+
+.enemy.telegraph #villain-canvas {
+  filter: drop-shadow(0 0 30px rgba(255, 60, 30, 0.9));
+  animation: none;
+}
+
+/* strike lunge: villain surges toward the screen */
+.enemy.lunge {
+  transform: translate(-50%, -50%) scale(1.45);
+  transition: transform 120ms cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.enemy.lunge #villain-canvas {
+  animation: none;
 }
 
 .enemy.hit {
   animation: enemy-shake 220ms ease-in-out;
 }
 
-.enemy.hit .enemy-sprite {
+.enemy.hit #villain-canvas {
   filter: drop-shadow(0 10px 25px rgba(255, 40, 40, 0.85)) brightness(1.6);
 }
 
@@ -74,12 +120,34 @@ html, body {
   100% { transform: translate(-50%, -50%) rotate(0deg); }
 }
 
-.enemy.dead .enemy-sprite {
+.enemy.dead #villain-canvas {
   transform: rotate(90deg) translateY(20px);
   filter: grayscale(1) brightness(0.6);
+  animation: none;
 }
 
-/* floating "HIT" popup text */
+/* red vignette flash when the player takes a hit */
+#damage-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center,
+    rgba(255, 0, 0, 0) 40%, rgba(255, 0, 0, 0.55) 100%);
+  z-index: 4;
+}
+
+#damage-flash.active {
+  animation: damage-flash 450ms ease-out forwards;
+}
+
+@keyframes damage-flash {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* floating popup text (HIT! / BLOCKED! / DODGED! / OOF!) */
 .hit-popup {
   position: absolute;
   top: 40%;
@@ -87,11 +155,15 @@ html, body {
   transform: translate(-50%, -50%);
   font-size: 3rem;
   font-weight: 900;
-  color: #ffd400;
   text-shadow: 0 0 10px rgba(0,0,0,0.8);
   pointer-events: none;
-  animation: hit-popup 500ms ease-out forwards;
+  animation: hit-popup 600ms ease-out forwards;
+  z-index: 5;
 }
+
+.popup-enemy-hit  { color: #ffd400; }
+.popup-defended   { color: #38e07b; top: 55%; }
+.popup-player-hit { color: #ff3b3b; top: 55%; }
 
 @keyframes hit-popup {
   0%   { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
@@ -106,12 +178,27 @@ html, body {
   top: 0;
   left: 0;
   width: 100%;
-  padding: 20px;
+  padding: max(12px, env(safe-area-inset-top)) 20px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
   pointer-events: none;
+  z-index: 6;
+}
+
+#player-hud {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 0 20px max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 6;
 }
 
 .health-bar-frame {
@@ -122,10 +209,12 @@ html, body {
   font-size: 0.8rem;
   letter-spacing: 2px;
   font-weight: 700;
-  color: #ff5c5c;
   margin-bottom: 4px;
   text-align: center;
 }
+
+.enemy-label  { color: #ff5c5c; }
+.player-label { color: #38e07b; }
 
 .health-bar-track {
   width: 100%;
@@ -140,9 +229,11 @@ html, body {
 .health-bar-fill {
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg, #ff2d55, #ff8a2d);
   transition: width 150ms ease-out;
 }
+
+.enemy-fill  { background: linear-gradient(90deg, #ff2d55, #ff8a2d); }
+.player-fill { background: linear-gradient(90deg, #1fbf5f, #7ae05a); }
 
 .hit-counter {
   font-size: 0.9rem;
@@ -151,6 +242,23 @@ html, body {
   background: rgba(0, 0, 0, 0.4);
   padding: 3px 12px;
   border-radius: 10px;
+}
+
+.guard-indicator {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #38e07b;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid #38e07b;
+  padding: 4px 14px;
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.guard-indicator.visible {
+  opacity: 1;
 }
 
 /* ---------- Overlay screens ---------- */
