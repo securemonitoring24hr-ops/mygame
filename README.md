@@ -1,4 +1,7 @@
-# Zombie Brawl
+# The Last Gym
+
+*(Formerly "Zombie Brawl" — now evolving into a zombie-survival fitness game
+per `PLAN.md`. This README describes the current build: Phase 2 of that plan.)*
 
 Browser-based, webcam motion-controlled boxing game. No backend, no build step —
 plain HTML/CSS/JS, everything loaded from CDN as ES modules:
@@ -48,11 +51,21 @@ required.)
 - **`src/defense.js`** — guarding: both wrists at/above shoulder height along the
   body's own up-axis (works even if the phone/torso is tilted). Dodging: shoulders
   shifted sideways from their resting screen position.
-- **`src/zombie.js`** — the Three.js zombie: rig construction, the continuous
-  idle shamble (legs stepping, torso sway, head twitch, arm drift — it's always
-  moving, never a static frame), and the attack state machine (windup → strike →
-  hurt/dead), all blended each frame rather than swapped between static poses.
-  Also owns health, hit/attack popups, and the death collapse + fade.
+- **`src/scene.js`** — the 3D arena: one fullscreen Three.js renderer, a night
+  graveyard assembled from Kenney's CC0 Graveyard Kit (fence line, gravestones,
+  crypts, pines in fog), moonlight + the gym's floodlight. The webcam feed is a
+  PiP "form-check mirror" in the corner, not the background.
+- **`src/actors.js`** — glTF loading + the AnimatedActor pattern: base looping
+  clip (Idle/Walk) with one-shot overlays (Punch/HitReact) that crossfade back
+  automatically. Both characters below build on it.
+- **`src/survivor.js`** — the player's avatar (Quaternius survivor, CC0),
+  standing at the barricade mirroring the player: Punch clips when you punch,
+  a crouched Duck guard when your fists are up, sidesteps when you dodge,
+  HitReact/Death/Wave as the fight goes.
+- **`src/zombieActor.js`** — the zombie (Quaternius Zombie_Basic, CC0): Walk
+  shamble at the broken fence, Idle_Attack windup as the telegraph, Punch with
+  a physical lunge toward the survivor on strike, HitReact on damage, Death
+  clip on defeat. Same attack state machine and gameplay contract as before.
 - **`src/game.js`** — wires pose → punch classification / defense detection →
   zombie AI → two-way damage → win/lose state together. Punch type affects
   damage (uppercut > hook > straight, rewarding harder-to-land shots).

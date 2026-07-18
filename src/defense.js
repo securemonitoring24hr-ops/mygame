@@ -14,6 +14,7 @@ export class DefenseDetector {
     this.baselineScreenX = null;
     this.guarding = false;
     this.dodging = false;
+    this.dodgeDirection = 0; // -1 = screen-left, +1 = screen-right, 0 = none
   }
 
   // worldKeypoints for guard (body-relative), screenKeypoints for dodge (camera-relative).
@@ -55,17 +56,21 @@ export class DefenseDetector {
 
     if (this.baselineScreenX === null) {
       this.baselineScreenX = midX;
-    } else {
+    } else if (!this.dodging) {
+      // Freeze the baseline while dodging, otherwise a held lean slowly
+      // becomes the new "center" and the dodge un-registers mid-attack.
       this.baselineScreenX += BASELINE_ALPHA * (midX - this.baselineScreenX);
     }
 
-    this.dodging =
-      Math.abs(midX - this.baselineScreenX) > DODGE_OFFSET_FACTOR * shoulderWidth;
+    const offset = midX - this.baselineScreenX;
+    this.dodging = Math.abs(offset) > DODGE_OFFSET_FACTOR * shoulderWidth;
+    this.dodgeDirection = this.dodging ? Math.sign(offset) : 0;
   }
 
   reset() {
     this.baselineScreenX = null;
     this.guarding = false;
     this.dodging = false;
+    this.dodgeDirection = 0;
   }
 }

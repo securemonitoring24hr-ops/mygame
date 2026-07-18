@@ -1,0 +1,4 @@
+# Never normalize line endings on 3D assets
+*.gltf -text
+*.glb binary
+*.png binary

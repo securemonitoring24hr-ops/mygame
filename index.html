@@ -3,21 +3,30 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Motion Boxing: Zombie Brawl</title>
+<title>The Last Gym</title>
 <link rel="stylesheet" href="styles/main.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
 </head>
 <body>
 
   <div id="app">
 
     <div id="arena">
-      <video id="webcam" autoplay playsinline muted></video>
-      <canvas id="overlay"></canvas>
+      <canvas id="game-canvas"></canvas>
 
-      <div id="enemy" class="enemy">
-        <div class="enemy-warning">!</div>
-        <canvas id="zombie-canvas"></canvas>
+      <div id="cam-pip">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
       </div>
+
+      <div id="attack-warning" class="enemy-warning">!</div>
 
       <div id="damage-flash"></div>
 
@@ -43,30 +52,34 @@
     </div>
 
     <div id="start-screen" class="overlay-screen">
-      <h1>Zombie Brawl</h1>
+      <h1>The Last Gym</h1>
+      <p class="story-text">The outbreak emptied the city. You barricaded the gym and kept
+         training &mdash; and every night they come through the fog to the fence.
+         Meet them at the barricade.</p>
       <p>Allow camera access and step back so your upper body is visible.<br />
          Throw real punches &mdash; <strong>jabs</strong>, <strong>hooks</strong>, and
-         <strong>uppercuts</strong> are all recognized and land different damage.<br />
-         When the zombie winds up (<strong>!</strong>), raise both fists to <strong>block</strong>
-         or lean sideways to <strong>dodge</strong> its swipe.</p>
+         <strong>uppercuts</strong> land different damage.<br />
+         When the zombie rears up (<strong>!</strong>), raise both fists to
+         <strong>block</strong> or lean sideways to <strong>dodge</strong>.</p>
       <button id="start-btn">Enable Camera &amp; Start</button>
       <p id="start-error" class="error-text"></p>
     </div>
 
     <div id="loading-screen" class="overlay-screen hidden">
-      <p>Loading pose model&hellip;</p>
+      <p>Loading the graveyard&hellip;</p>
+      <p id="loading-detail" class="loading-detail"></p>
     </div>
 
     <div id="win-screen" class="overlay-screen hidden">
-      <h1>Zombie Down!</h1>
+      <h1>Fence Held.</h1>
       <p id="win-stats"></p>
-      <button id="restart-btn">Play Again</button>
+      <button id="restart-btn">Next Fight</button>
     </div>
 
     <div id="lose-screen" class="overlay-screen hidden">
-      <h1>Bitten!</h1>
+      <h1>Overrun.</h1>
       <p id="lose-stats"></p>
-      <button id="retry-btn">Try Again</button>
+      <button id="retry-btn">Get Back Up</button>
     </div>
 
   </div>

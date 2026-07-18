@@ -2,6 +2,7 @@ import { Game } from './game.js';
 
 const startScreen = document.getElementById('start-screen');
 const loadingScreen = document.getElementById('loading-screen');
+const loadingDetail = document.getElementById('loading-detail');
 const winScreen = document.getElementById('win-screen');
 const loseScreen = document.getElementById('lose-screen');
 const startBtn = document.getElementById('start-btn');
@@ -14,8 +15,8 @@ const loseStats = document.getElementById('lose-stats');
 const dom = {
   videoEl: document.getElementById('webcam'),
   canvasEl: document.getElementById('overlay'),
-  enemyEl: document.getElementById('enemy'),
-  spriteCanvasEl: document.getElementById('zombie-canvas'),
+  gameCanvasEl: document.getElementById('game-canvas'),
+  warningEl: document.getElementById('attack-warning'),
   healthFillEl: document.getElementById('health-bar-fill'),
   playerHealthFillEl: document.getElementById('player-health-fill'),
   arenaEl: document.getElementById('arena'),
@@ -23,7 +24,7 @@ const dom = {
   guardIndicatorEl: document.getElementById('guard-indicator'),
   damageFlashEl: document.getElementById('damage-flash'),
   onWin: ({ hitCount }) => {
-    winStats.textContent = `Defeated in ${hitCount} punches.`;
+    winStats.textContent = `Put down in ${hitCount} punches. The radio crackles a little clearer tonight.`;
     winScreen.classList.remove('hidden');
   },
   onLose: ({ hitCount }) => {
@@ -41,7 +42,9 @@ startBtn.addEventListener('click', async () => {
   loadingScreen.classList.remove('hidden');
 
   try {
-    await game.start();
+    await game.start((msg) => {
+      loadingDetail.textContent = msg;
+    });
     loadingScreen.classList.add('hidden');
   } catch (err) {
     console.error(err);
@@ -69,5 +72,5 @@ function describeError(err) {
   if (err && err.name === 'NotFoundError') {
     return 'No camera was found on this device.';
   }
-  return 'Something went wrong starting the camera or pose model. Please try again.';
+  return 'Something went wrong starting the camera, pose model, or 3D assets. Please try again.';
 }

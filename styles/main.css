@@ -17,12 +17,36 @@ html, body {
   height: 100vh;
 }
 
-/* ---------- Arena (webcam + overlay + zombie) ---------- */
+/* ---------- Arena (3D scene + webcam PiP) ---------- */
 
 #arena {
   position: relative;
   width: 100%;
   height: 100%;
+  background: #000;
+}
+
+#game-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Webcam feed shrinks to a mirror in the corner — your form-check monitor */
+#cam-pip {
+  position: absolute;
+  left: 12px;
+  /* sits above the player health bar row */
+  bottom: calc(max(14px, env(safe-area-inset-bottom)) + 84px);
+  width: min(28vw, 190px);
+  aspect-ratio: 4 / 3;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 5;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
   background: #000;
 }
 
@@ -42,37 +66,22 @@ html, body {
   pointer-events: none;
 }
 
-.enemy {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  transition: transform 80ms ease-out;
-}
-
-#zombie-canvas {
-  display: block;
-  width: min(50vw, 280px);
-  aspect-ratio: 3 / 4;
-  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.6));
-  transition: filter 120ms ease-out;
-}
-
 /* "!" warning shown while the zombie winds up an attack */
 .enemy-warning {
   position: absolute;
-  top: -0.4em;
+  top: 16%;
   left: 50%;
-  transform: translateX(-50%) scale(0);
+  transform: translateX(-50%);
   font-size: 4rem;
   font-weight: 900;
   color: #ff2d2d;
   text-shadow: 0 0 12px rgba(255, 45, 45, 0.9), 0 2px 4px rgba(0,0,0,0.8);
   z-index: 3;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.enemy.telegraph .enemy-warning {
+.enemy-warning.telegraph {
   animation: warning-pulse 400ms ease-in-out infinite alternate;
 }
 
@@ -80,36 +89,6 @@ html, body {
   from { transform: translateX(-50%) scale(0.9); opacity: 0.7; }
   to   { transform: translateX(-50%) scale(1.25); opacity: 1; }
 }
-
-.enemy.telegraph #zombie-canvas {
-  filter: drop-shadow(0 0 30px rgba(255, 60, 30, 0.9));
-}
-
-/* strike lunge: zombie surges toward the screen (the 3D rig also lunges its
-   own root position — this CSS punch adds a snappy screen-space kick on top) */
-.enemy.lunge {
-  transform: translate(-50%, -50%) scale(1.3);
-  transition: transform 120ms cubic-bezier(0.2, 1.4, 0.4, 1);
-}
-
-.enemy.hit {
-  animation: enemy-shake 220ms ease-in-out;
-}
-
-.enemy.hit #zombie-canvas {
-  filter: drop-shadow(0 10px 25px rgba(255, 40, 40, 0.85)) brightness(1.6);
-}
-
-@keyframes enemy-shake {
-  0%   { transform: translate(-50%, -50%) rotate(0deg); }
-  25%  { transform: translate(calc(-50% + 12px), -50%) rotate(-6deg); }
-  50%  { transform: translate(calc(-50% - 10px), -50%) rotate(5deg); }
-  75%  { transform: translate(calc(-50% + 6px), -50%) rotate(-3deg); }
-  100% { transform: translate(-50%, -50%) rotate(0deg); }
-}
-
-/* Death itself (collapse + fade) is animated inside the 3D rig
-   (zombie.js:_animateDeath/_fadeOut) — no CSS transform needed here. */
 
 /* red vignette flash when the player takes a hit */
 #damage-flash {
@@ -278,6 +257,17 @@ html, body {
   color: #c8c8d4;
   max-width: 500px;
   line-height: 1.5;
+}
+
+.story-text {
+  font-style: italic;
+  color: #9aa3b8;
+}
+
+.loading-detail {
+  font-size: 0.85rem;
+  color: #7a8296;
+  min-height: 1.2em;
 }
 
 .overlay-screen button {
